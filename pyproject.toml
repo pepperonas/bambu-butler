@@ -1,0 +1,54 @@
+[project]
+name = "bambu-butler"
+version = "0.0.1"
+description = "Local CLI tools and a Claude Code skill that turn print requests into validated Bambu Studio projects."
+readme = "README.md"
+license = "MIT"
+authors = [
+    { name = "Martin Pfeffer", email = "martinpaush@gmail.com" }
+]
+requires-python = ">=3.11"
+dependencies = [
+    "numpy>=1.26",
+    "pydantic>=2.7",
+    "rich>=13.7",
+    "typer>=0.12",
+]
+keywords = ["bambu-lab", "bambu-studio", "3d-printing", "slicer", "claude-code"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: MacOS",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX :: Linux",
+    "Topic :: Multimedia :: Graphics :: 3D Modeling",
+]
+
+[project.urls]
+Homepage = "https://github.com/pepperonas/bambu-butler"
+
+[project.scripts]
+bambu-butler = "bambu_butler.cli:main"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.6",
+]
+
+[build-system]
+requires = ["uv_build>=0.8.17,<0.9.0"]
+build-backend = "uv_build"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP"]
+ignore = ["UP042"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/conftest.py" = ["E501"]

@@ -1,0 +1,30 @@
+{
+  "$comment": "BEISPIEL mit Support, Rotation und Roh-Overrides. ANPASSEN: Profilnamen mit 'bambu-butler profiles list --printer \"<Drucker>\"' pruefen. Der Filamentname ist ein Platzhalter-Kandidat und muss lokal existieren.",
+  "schema": "bambu-butler/print-plan",
+  "schema_version": "1",
+  "request": "Wandhalter aus PETG, stehend drucken, Support nur vom Bett.",
+  "model": {"path": "models/wandhalter.stl"},
+  "printer": {"profile": "Bambu Lab A1 mini 0.4 nozzle", "nozzle_diameter_mm": 0.4},
+  "process": {"profile": "0.20mm Strength @BBL A1M"},
+  "filaments": [{"profile": "Bambu PETG Basic @BBL A1M 0.4 nozzle", "material": "PETG"}],
+  "settings": {
+    "strength": {"wall_loops": 3},
+    "support": {"enabled": true, "style": "tree_auto", "threshold_angle_deg": 40, "build_plate_only": true},
+    "adhesion": {"brim": "outer_only", "brim_width_mm": 4}
+  },
+  "overrides": {
+    "process": {"outer_wall_speed": 120},
+    "filament": {},
+    "machine": {}
+  },
+  "transform": {"rotate_x_deg": 90, "scale": 1.0, "auto_orient": false, "arrange": true},
+  "output": {"job_name": "wandhalter-petg"},
+  "assumptions": [{"text": "PETG ist im Drucker geladen; ein AMS lite wird nicht benoetigt."}],
+  "rationale": [
+    {"setting": "overrides.process.outer_wall_speed", "value": 120, "reason": "Langsamere Aussenwand fuer PETG-Oberflaeche."},
+    {"setting": "adhesion.brim", "value": "outer_only", "reason": "Stehendes Teil mit kleiner Auflageflaeche."}
+  ],
+  "open_questions": [
+    {"question": "Soll die Last parallel zu den Schichten wirken? Dann ist liegender Druck stabiler.", "blocking": false}
+  ]
+}

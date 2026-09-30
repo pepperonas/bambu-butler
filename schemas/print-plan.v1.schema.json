@@ -1,0 +1,668 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/pepperonas/bambu-butler/schemas/print-plan.v1.schema.json",
+  "$defs": {
+    "Adhesion": {
+      "additionalProperties": false,
+      "properties": {
+        "brim": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Brim"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "brim_width_mm": {
+          "anyOf": [
+            {
+              "maximum": 100,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Brim Width Mm"
+        }
+      },
+      "title": "Adhesion",
+      "type": "object"
+    },
+    "Brim": {
+      "enum": [
+        "auto",
+        "none",
+        "outer_only",
+        "inner_only",
+        "outer_and_inner",
+        "ears"
+      ],
+      "title": "Brim",
+      "type": "string"
+    },
+    "FilamentSelection": {
+      "additionalProperties": false,
+      "properties": {
+        "profile": {
+          "description": "Exact name of a filament profile compatible with the printer.",
+          "title": "Profile",
+          "type": "string"
+        },
+        "material": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Expected filament_type, e.g. 'PLA'. Checked against the profile.",
+          "title": "Material"
+        }
+      },
+      "required": [
+        "profile"
+      ],
+      "title": "FilamentSelection",
+      "type": "object"
+    },
+    "InfillPattern": {
+      "enum": [
+        "concentric",
+        "zig-zag",
+        "grid",
+        "line",
+        "cubic",
+        "triangles",
+        "tri-hexagon",
+        "gyroid",
+        "honeycomb",
+        "adaptivecubic",
+        "alignedrectilinear",
+        "3dhoneycomb",
+        "hilbertcurve",
+        "archimedeanchords",
+        "octagramspiral",
+        "supportcubic",
+        "lightning",
+        "crosshatch"
+      ],
+      "title": "InfillPattern",
+      "type": "string"
+    },
+    "Ironing": {
+      "enum": [
+        "none",
+        "top",
+        "topmost",
+        "solid"
+      ],
+      "title": "Ironing",
+      "type": "string"
+    },
+    "ModelInput": {
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "description": "Path to the .stl or .3mf file, relative to the plan file or absolute.",
+          "title": "Path",
+          "type": "string"
+        }
+      },
+      "required": [
+        "path"
+      ],
+      "title": "ModelInput",
+      "type": "object"
+    },
+    "Note": {
+      "additionalProperties": false,
+      "properties": {
+        "text": {
+          "minLength": 1,
+          "title": "Text",
+          "type": "string"
+        },
+        "reason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reason"
+        }
+      },
+      "required": [
+        "text"
+      ],
+      "title": "Note",
+      "type": "object"
+    },
+    "OpenQuestion": {
+      "additionalProperties": false,
+      "properties": {
+        "question": {
+          "minLength": 1,
+          "title": "Question",
+          "type": "string"
+        },
+        "blocking": {
+          "default": false,
+          "description": "True if slicing must wait for an answer.",
+          "title": "Blocking",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "question"
+      ],
+      "title": "OpenQuestion",
+      "type": "object"
+    },
+    "Output": {
+      "additionalProperties": false,
+      "properties": {
+        "directory": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Jobs directory. Default: settings jobs_dir.",
+          "title": "Directory"
+        },
+        "job_name": {
+          "anyOf": [
+            {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9 ._-]{0,63}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Job Name"
+        }
+      },
+      "title": "Output",
+      "type": "object"
+    },
+    "PrinterSelection": {
+      "additionalProperties": false,
+      "properties": {
+        "profile": {
+          "description": "Exact name of a machine profile as listed by 'profiles list'.",
+          "title": "Profile",
+          "type": "string"
+        },
+        "nozzle_diameter_mm": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "maximum": 2,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Expected nozzle diameter. Checked against the machine profile, not used to pick it.",
+          "title": "Nozzle Diameter Mm"
+        }
+      },
+      "required": [
+        "profile"
+      ],
+      "title": "PrinterSelection",
+      "type": "object"
+    },
+    "ProcessSelection": {
+      "additionalProperties": false,
+      "properties": {
+        "profile": {
+          "description": "Exact name of a process profile compatible with the printer.",
+          "title": "Profile",
+          "type": "string"
+        }
+      },
+      "required": [
+        "profile"
+      ],
+      "title": "ProcessSelection",
+      "type": "object"
+    },
+    "Quality": {
+      "additionalProperties": false,
+      "properties": {
+        "layer_height_mm": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "maximum": 1.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Layer Height Mm"
+        },
+        "first_layer_height_mm": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "maximum": 1.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "First Layer Height Mm"
+        },
+        "seam": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Seam"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "ironing": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Ironing"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "title": "Quality",
+      "type": "object"
+    },
+    "Rationale": {
+      "additionalProperties": false,
+      "properties": {
+        "setting": {
+          "minLength": 1,
+          "title": "Setting",
+          "type": "string"
+        },
+        "value": {
+          "default": null,
+          "title": "Value"
+        },
+        "reason": {
+          "minLength": 1,
+          "title": "Reason",
+          "type": "string"
+        }
+      },
+      "required": [
+        "setting",
+        "reason"
+      ],
+      "title": "Rationale",
+      "type": "object"
+    },
+    "RawOverrides": {
+      "additionalProperties": false,
+      "description": "Direct Bambu Studio keys. Each key must exist in the resolved base profile.",
+      "properties": {
+        "process": {
+          "additionalProperties": true,
+          "title": "Process",
+          "type": "object"
+        },
+        "filament": {
+          "additionalProperties": true,
+          "title": "Filament",
+          "type": "object"
+        },
+        "machine": {
+          "additionalProperties": true,
+          "title": "Machine",
+          "type": "object"
+        }
+      },
+      "title": "RawOverrides",
+      "type": "object"
+    },
+    "Seam": {
+      "enum": [
+        "nearest",
+        "aligned",
+        "back",
+        "random"
+      ],
+      "title": "Seam",
+      "type": "string"
+    },
+    "Settings": {
+      "additionalProperties": false,
+      "properties": {
+        "quality": {
+          "$ref": "#/$defs/Quality"
+        },
+        "strength": {
+          "$ref": "#/$defs/Strength"
+        },
+        "support": {
+          "$ref": "#/$defs/Support"
+        },
+        "adhesion": {
+          "$ref": "#/$defs/Adhesion"
+        }
+      },
+      "title": "Settings",
+      "type": "object"
+    },
+    "Strength": {
+      "additionalProperties": false,
+      "properties": {
+        "wall_loops": {
+          "anyOf": [
+            {
+              "maximum": 1000,
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Wall Loops"
+        },
+        "top_layers": {
+          "anyOf": [
+            {
+              "maximum": 1000,
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Top Layers"
+        },
+        "bottom_layers": {
+          "anyOf": [
+            {
+              "maximum": 1000,
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Bottom Layers"
+        },
+        "infill_density_percent": {
+          "anyOf": [
+            {
+              "maximum": 100,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Infill Density Percent"
+        },
+        "infill_pattern": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/InfillPattern"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "title": "Strength",
+      "type": "object"
+    },
+    "Support": {
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Enabled"
+        },
+        "style": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SupportStyle"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "threshold_angle_deg": {
+          "anyOf": [
+            {
+              "maximum": 90,
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Threshold Angle Deg"
+        },
+        "build_plate_only": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Build Plate Only"
+        }
+      },
+      "title": "Support",
+      "type": "object"
+    },
+    "SupportStyle": {
+      "enum": [
+        "normal_auto",
+        "tree_auto",
+        "normal_manual",
+        "tree_manual"
+      ],
+      "title": "SupportStyle",
+      "type": "string"
+    },
+    "Transform": {
+      "additionalProperties": false,
+      "properties": {
+        "rotate_x_deg": {
+          "default": 0.0,
+          "title": "Rotate X Deg",
+          "type": "number"
+        },
+        "rotate_y_deg": {
+          "default": 0.0,
+          "title": "Rotate Y Deg",
+          "type": "number"
+        },
+        "rotate_z_deg": {
+          "default": 0.0,
+          "title": "Rotate Z Deg",
+          "type": "number"
+        },
+        "scale": {
+          "default": 1.0,
+          "exclusiveMinimum": 0,
+          "maximum": 100,
+          "title": "Scale",
+          "type": "number"
+        },
+        "auto_orient": {
+          "default": false,
+          "description": "Let Bambu Studio auto-orient (--orient 1).",
+          "title": "Auto Orient",
+          "type": "boolean"
+        },
+        "arrange": {
+          "default": true,
+          "description": "Let Bambu Studio arrange on the plate (--arrange 1).",
+          "title": "Arrange",
+          "type": "boolean"
+        }
+      },
+      "title": "Transform",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema": {
+      "const": "bambu-butler/print-plan",
+      "default": "bambu-butler/print-plan",
+      "title": "Schema",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "1",
+      "default": "1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "$comment": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Free text, ignored.",
+      "title": "$Comment"
+    },
+    "request": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "The original natural-language request.",
+      "title": "Request"
+    },
+    "model": {
+      "$ref": "#/$defs/ModelInput"
+    },
+    "printer": {
+      "$ref": "#/$defs/PrinterSelection"
+    },
+    "process": {
+      "$ref": "#/$defs/ProcessSelection"
+    },
+    "filaments": {
+      "items": {
+        "$ref": "#/$defs/FilamentSelection"
+      },
+      "maxItems": 32,
+      "minItems": 1,
+      "title": "Filaments",
+      "type": "array"
+    },
+    "settings": {
+      "$ref": "#/$defs/Settings"
+    },
+    "overrides": {
+      "$ref": "#/$defs/RawOverrides"
+    },
+    "transform": {
+      "$ref": "#/$defs/Transform"
+    },
+    "output": {
+      "$ref": "#/$defs/Output"
+    },
+    "assumptions": {
+      "items": {
+        "$ref": "#/$defs/Note"
+      },
+      "title": "Assumptions",
+      "type": "array"
+    },
+    "rationale": {
+      "items": {
+        "$ref": "#/$defs/Rationale"
+      },
+      "title": "Rationale",
+      "type": "array"
+    },
+    "open_questions": {
+      "items": {
+        "$ref": "#/$defs/OpenQuestion"
+      },
+      "title": "Open Questions",
+      "type": "array"
+    }
+  },
+  "required": [
+    "model",
+    "printer",
+    "process",
+    "filaments"
+  ],
+  "title": "Bambu Butler print plan v1",
+  "type": "object"
+}

@@ -1,0 +1,30 @@
+{
+  "$comment": "BEISPIEL. Vor Nutzung anpassen: printer.profile, process.profile und filaments[].profile muessen exakt Profilnamen aus 'bambu-butler profiles list' entsprechen. Die Namen hier stammen aus den Bambu-Studio-Systemprofilen v02.08.",
+  "schema": "bambu-butler/print-plan",
+  "schema_version": "1",
+  "request": "Bereite wandhalter.stl fuer meinen Bambu Lab A1 mini mit PLA vor. Die Halterung soll stabil sein, eine saubere sichtbare Oberflaeche haben und moeglichst wenig Support benoetigen.",
+  "model": {"path": "models/wandhalter.stl"},
+  "printer": {"profile": "Bambu Lab A1 mini 0.4 nozzle", "nozzle_diameter_mm": 0.4},
+  "process": {"profile": "0.20mm Standard @BBL A1M"},
+  "filaments": [{"profile": "Bambu PLA Basic @BBL A1M", "material": "PLA"}],
+  "settings": {
+    "quality": {"layer_height_mm": 0.2, "seam": "back", "ironing": "none"},
+    "strength": {"wall_loops": 4, "top_layers": 5, "bottom_layers": 4, "infill_density_percent": 25, "infill_pattern": "gyroid"},
+    "support": {"enabled": false},
+    "adhesion": {"brim": "auto"}
+  },
+  "overrides": {"process": {}, "filament": {}, "machine": {}},
+  "transform": {"rotate_x_deg": 0, "rotate_y_deg": 0, "rotate_z_deg": 0, "scale": 1.0, "auto_orient": false, "arrange": true},
+  "output": {"job_name": "wandhalter"},
+  "assumptions": [
+    {"text": "Das Modell liegt bereits in Druckorientierung (lange Seite auf dem Bett).", "reason": "Kein Hinweis auf eine andere Ausrichtung; die Ausrichtung wurde nicht automatisch optimiert."},
+    {"text": "Die Last wirkt auf den senkrechten Schenkel.", "reason": "Typisch fuer Wandhalter; nicht aus dem Mesh ableitbar."}
+  ],
+  "rationale": [
+    {"setting": "strength.wall_loops", "value": 4, "reason": "Festigkeit kommt ueberwiegend aus den Waenden, nicht aus der Fuellung."},
+    {"setting": "strength.infill_density_percent", "value": 25, "reason": "Gyroid 25 % gibt isotrope Stuetzung bei moderatem Materialverbrauch."},
+    {"setting": "quality.seam", "value": "back", "reason": "Naht auf die Rueckseite, damit die sichtbare Front sauber bleibt."},
+    {"setting": "support.enabled", "value": false, "reason": "L-Profil liegt flach auf, keine Ueberhaenge ueber dem Bett."}
+  ],
+  "open_questions": []
+}
