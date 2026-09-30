@@ -40,6 +40,9 @@ Layout (`src/bambu_butler/`):
 | `opener.py`, `gui_macos.py` | Open project; optional macOS checks (no clicks, no coordinates) |
 | `printer.py` | Printer adapter interface only; raises `NotSupportedError` |
 
+Docs: `README.md` (German, user-facing), `docs/cli.md`, `docs/plan-schema.md`, `docs/features.md`,
+`docs/troubleshooting.md`, `docs/printer-control.md`, `docs/gui-macos.md`, `CHANGELOG.md`.
+
 ## Rules for changes
 
 - Never add Bambu Studio CLI flags or profile keys without checking the Bambu Studio sources
@@ -57,6 +60,9 @@ Layout (`src/bambu_butler/`):
   clearly a test double.
 
 ## Real integration test (needs Bambu Studio)
+
+Last verified: macOS, Bambu Studio 02.08.02.61 (see `docs/features.md`). Update that file and
+`CHANGELOG.md` when verifying new versions or platforms.
 
 ```bash
 uv run bambu-butler doctor --strict
