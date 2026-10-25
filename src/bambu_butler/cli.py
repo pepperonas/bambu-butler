@@ -10,6 +10,7 @@ from typing import Annotated, Any
 
 import typer
 from rich.console import Console
+from rich.markup import escape
 from rich.panel import Panel
 from rich.table import Table
 
@@ -40,6 +41,12 @@ console = Console()
 err_console = Console(stderr=True)
 
 
+def esc(value: Any) -> str:
+    """Escape a value for Rich markup: names, paths and messages may contain brackets like
+    ``[bambu-butler job]`` that Rich would otherwise swallow as tags (or reject as broken markup)."""
+    return escape(str(value))
+
+
 @dataclass
 class State:
     json: bool = False
@@ -68,14 +75,14 @@ def fail(exc: ButlerError) -> None:
         sys.stdout.write(json.dumps({"ok": False, "error": exc.to_dict()}, ensure_ascii=False, indent=2,
                                     default=str) + "\n")
     else:
-        err_console.print(f"[bold red]Fehler:[/] {exc.message}")
+        err_console.print(f"[bold red]Fehler:[/] {esc(exc.message)}")
         if exc.hint:
-            err_console.print(f"[yellow]Hinweis:[/] {exc.hint}")
+            err_console.print(f"[yellow]Hinweis:[/] {esc(exc.hint)}")
         issues = exc.details.get("issues") if exc.details else None
         if issues:
             for issue in issues:
                 if isinstance(issue, dict) and issue.get("level") in ("error", None):
-                    err_console.print(f"  - {issue.get('location', '')}{issue['message']}")
+                    err_console.print(f"  - {esc(issue.get('location', ''))}{esc(issue['message'])}")
     raise typer.Exit(exc.exit_code)
 
 
@@ -150,10 +157,10 @@ def init(
 
     def render():
         if existing:
-            console.print(f"Konfiguration existiert bereits: {cfg_path} (mit --force überschreiben)")
+            console.print(f"Konfiguration existiert bereits: {esc(cfg_path)} (mit --force überschreiben)")
         else:
-            console.print(f"[green]Angelegt:[/] {cfg_path}")
-        console.print(f"Ordner: {directory / 'jobs'}, {directory / 'plans'}")
+            console.print(f"[green]Angelegt:[/] {esc(cfg_path)}")
+        console.print(f"Ordner: {esc(directory / 'jobs')}, {esc(directory / 'plans')}")
         console.print("Nächster Schritt: [bold]bambu-butler doctor[/]")
 
     emit(data, render)
@@ -209,14 +216,14 @@ def doctor(
         t = Table(title="Bambu Butler doctor", show_header=False)
         t.add_row("Version", __version__)
         t.add_row("System", f"{current_os()} / Python {data['python']}")
-        t.add_row("Konfiguration", str(settings.config_file or "keine (Auto-Erkennung)"))
-        t.add_row("Bambu Studio", f"{info.executable or '[red]nicht gefunden[/]'}"
-                  + (f" ({settings.sources.get('studio_executable')})" if info.executable else ""))
-        t.add_row("Version Bambu Studio", f"{info.version or 'unbekannt'}"
+        t.add_row("Konfiguration", esc(settings.config_file or "keine (Auto-Erkennung)"))
+        t.add_row("Bambu Studio", f"{esc(info.executable) if info.executable else '[red]nicht gefunden[/]'}"
+                  + (f" ({esc(settings.sources.get('studio_executable'))})" if info.executable else ""))
+        t.add_row("Version Bambu Studio", f"{esc(info.version or 'unbekannt')}"
                   + (f" (aus {info.version_source})" if info.version_source else ""))
         t.add_row("CLI nutzbar", "[green]ja[/]" if info.cli_usable else "[red]nein[/]")
-        t.add_row("Ressourcen", str(settings.resources_dir or "[red]nicht gefunden[/]"))
-        t.add_row("Datenordner", str(settings.data_dir or "[yellow]nicht gefunden[/]"))
+        t.add_row("Ressourcen", esc(settings.resources_dir) if settings.resources_dir else "[red]nicht gefunden[/]")
+        t.add_row("Datenordner", esc(settings.data_dir) if settings.data_dir else "[yellow]nicht gefunden[/]")
         for ptype, c in counts.items():
             t.add_row(f"Profile {ptype}", f"{c['system']} System, {c['user']} Benutzer")
         t.add_row("Druckerprofile", f"{len(printers)} verfügbar")
@@ -224,7 +231,7 @@ def doctor(
         t.add_row("Druckersteuerung", "nicht implementiert")
         console.print(t)
         for p in info.problems + ([store_problem] if store_problem else []):
-            console.print(f"[yellow]•[/] {p}")
+            console.print(f"[yellow]•[/] {esc(p)}")
         if missing:
             console.print(f"[bold red]Fehlt:[/] {', '.join(missing)}")
             console.print("Pfade überschreiben: --studio, --resources, --data-dir oder bambu-butler.json")
@@ -276,8 +283,8 @@ def profiles_list(
         t.add_column("Quelle")
         t.add_column("erbt von")
         for i in items:
-            t.add_row(i["type"], i["name"], i["origin"] + (f"/{i['vendor']}" if i["vendor"] else ""),
-                      i["inherits"] or "")
+            t.add_row(i["type"], esc(i["name"]), esc(i["origin"] + (f"/{i['vendor']}" if i["vendor"] else "")),
+                      esc(i["inherits"] or ""))
         console.print(t)
 
     emit({"count": len(items), "profiles": items}, render)
@@ -304,8 +311,8 @@ def profiles_show(
             "values": values}
 
     def render():
-        console.print(Panel(f"[bold]{record.name}[/] ({record.type}, {record.origin})\n"
-                            f"Datei: {record.path}\nVererbung: {' → '.join(resolved.chain)}",
+        console.print(Panel(f"[bold]{esc(record.name)}[/] ({record.type}, {record.origin})\n"
+                            f"Datei: {esc(record.path)}\nVererbung: {esc(' → '.join(resolved.chain))}",
                             title="Profil"))
         t = Table(show_header=True)
         t.add_column("Schlüssel")
@@ -313,7 +320,7 @@ def profiles_show(
         for k in sorted(values):
             v = values[k]
             text = json.dumps(v, ensure_ascii=False) if not isinstance(v, str) else v
-            t.add_row(k, text if len(text) < 200 else text[:197] + "...")
+            t.add_row(esc(k), esc(text if len(text) < 200 else text[:197] + "..."))
         console.print(t)
 
     emit(data, render)
@@ -343,7 +350,7 @@ def inspect(
 
     def render():
         bb = report.get("bounding_box_mm", {})
-        t = Table(title=f"Modell: {info.path.name}", show_header=False)
+        t = Table(title=f"Modell: {esc(info.path.name)}", show_header=False)
         t.add_row("Format", report["format"])
         t.add_row("Einheit", str(report["unit"]))
         t.add_row("Objekte", str(report["object_count"]))
@@ -363,13 +370,13 @@ def inspect(
             for col in ("Name", "Dreiecke", "Größe mm", "Filament-Slot"):
                 ot.add_column(col)
             for o in report["objects"]:
-                ot.add_row(o["name"], str(o["triangles"]), " × ".join(f"{v:.1f}" for v in o["size_mm"]),
+                ot.add_row(esc(o["name"]), str(o["triangles"]), " × ".join(f"{v:.1f}" for v in o["size_mm"]),
                            str(o.get("filament_slot", "–")))
             console.print(ot)
         if info.project:
-            console.print(f"Projekt: {json.dumps(info.project, ensure_ascii=False)}")
+            console.print(f"Projekt: {esc(json.dumps(info.project, ensure_ascii=False))}")
         for w in report["warnings"]:
-            console.print(f"[yellow]•[/] {w}")
+            console.print(f"[yellow]•[/] {esc(w)}")
         console.print(f"[dim]{report['limits']}[/]")
 
     emit({"model": report}, render)
@@ -379,7 +386,7 @@ def inspect(
 def _render_issues(result) -> None:
     for i in result.issues:
         color = {"error": "red", "warning": "yellow", "info": "blue"}[i.level]
-        console.print(f"[{color}]{i.level:>7}[/] {i.message}")
+        console.print(f"[{color}]{i.level:>7}[/] {esc(i.message)}")
 
 
 @app.command()
@@ -399,8 +406,8 @@ def validate(plan_path: Annotated[Path, typer.Argument(help="Druckplan (JSON).")
         console.print("[dim]•[/] Geslict: nein (erst nach 'bambu-butler slice')")
         _render_issues(result)
         if result.process_overrides:
-            console.print("Prozess-Änderungen: " + ", ".join(
-                f"{k}={v}" for k, v in result.process_overrides.items()))
+            console.print("Prozess-Änderungen: " + esc(", ".join(
+                f"{k}={v}" for k, v in result.process_overrides.items())))
 
     emit(data, render)
     if not result.compatible:
@@ -419,29 +426,29 @@ def _run_job(plan_path: Path, mode: str, dry_run: bool, timeout: int | None, all
         job = jobs.execute(job, settings, info, raw, dry_run=dry_run, timeout=timeout)
     except ButlerError:
         if not state.json:
-            console.print(f"Auftragsordner: {job.job_dir}")
+            console.print(f"Auftragsordner: {esc(job.job_dir)}")
         raise
     data = {"job": job.to_dict()}
 
     def render():
         color = "green" if job.status in ("sliced", "prepared") else "yellow"
-        console.print(Panel(jobs.STATUS_TEXT[job.status], title=f"Status: {job.status}", border_style=color))
+        console.print(Panel(esc(jobs.STATUS_TEXT[job.status]), title=f"Status: {job.status}", border_style=color))
         for key, changes in job.changes.items():
             for c in changes:
-                console.print(f"  {key}.{c['key']}: {jobs._fmt(c['before'])} → {jobs._fmt(c['after'])}")
+                console.print(esc(f"  {key}.{c['key']}: {jobs._fmt(c['before'])} → {jobs._fmt(c['after'])}"))
         if dry_run:
             console.print("Geplanter Aufruf (Argumentliste):")
-            console.print(json.dumps(job.argv, ensure_ascii=False, indent=1))
-            console.print(f"Auftragsordner (würde angelegt): {job.job_dir}")
+            console.print(esc(json.dumps(job.argv, ensure_ascii=False, indent=1)))
+            console.print(f"Auftragsordner (würde angelegt): {esc(job.job_dir)}")
         else:
-            console.print(f"Auftragsordner: {job.job_dir}")
-            console.print(f"Bericht: {job.job_dir / job.files['report_md']}")
+            console.print(f"Auftragsordner: {esc(job.job_dir)}")
+            console.print(f"Bericht: {esc(job.job_dir / job.files['report_md'])}")
         if job.slice_summary:
             s = job.slice_summary
             console.print(f"Druckzeit: {jobs.slicer.format_duration(s.get('print_time_seconds'))}, "
-                          f"Filament: {s.get('filament_g', 'unbekannt')} g (Quelle: {s['source']})")
+                          f"Filament: {esc(s.get('filament_g', 'unbekannt'))} g (Quelle: {esc(s['source'])})")
         for n in job.notes:
-            console.print(f"[yellow]•[/] {n}")
+            console.print(f"[yellow]•[/] {esc(n)}")
         _render_issues(result)
         console.print("[dim]Es wurde kein Druck gestartet.[/]")
 
@@ -491,11 +498,11 @@ def open_(
 
     def render():
         if dry_run:
-            console.print(f"Würde ausführen: {data['argv']}")
+            console.print(f"Würde ausführen: {esc(data['argv'])}")
         else:
-            console.print(f"[green]Geöffnet:[/] {data['project']}")
+            console.print(f"[green]Geöffnet:[/] {esc(data['project'])}")
         for p in data.get("gui", {}).get("problems", []):
-            console.print(f"[yellow]•[/] {p}")
+            console.print(f"[yellow]•[/] {esc(p)}")
         console.print("Druck bitte manuell in Bambu Studio prüfen und starten.")
 
     emit(data, render)
@@ -509,7 +516,7 @@ def schema(output: Annotated[Path | None, typer.Option("--output", "-o")] = None
     text = json.dumps(s, indent=2, ensure_ascii=False) + "\n"
     if output:
         output.write_text(text, encoding="utf-8")
-        emit({"written": str(output)}, lambda: console.print(f"Geschrieben: {output}"))
+        emit({"written": str(output)}, lambda: console.print(f"Geschrieben: {esc(output)}"))
     else:
         sys.stdout.write(text)
 
@@ -562,7 +569,7 @@ def template(
     if output:
         output.parent.mkdir(parents=True, exist_ok=True)
         output.write_text(text, encoding="utf-8")
-        emit({"written": str(output), "plan": plan}, lambda: console.print(f"Plan geschrieben: {output}"))
+        emit({"written": str(output), "plan": plan}, lambda: console.print(f"Plan geschrieben: {esc(output)}"))
     else:
         emit({"plan": plan}, lambda: sys.stdout.write(text))
 
@@ -574,7 +581,7 @@ def printer_status() -> None:
     """Stand der Druckersteuerung anzeigen."""
     emit({"implemented": False, "capabilities": printer.CAPABILITIES,
           "message": printer.NotImplementedAdapter.MESSAGE},
-         lambda: console.print(printer.NotImplementedAdapter.MESSAGE))
+         lambda: console.print(esc(printer.NotImplementedAdapter.MESSAGE)))
 
 
 @printer_app.command("start")
@@ -590,7 +597,7 @@ def gui_check(expected: Annotated[str | None, typer.Option("--expect")] = None) 
     """macOS: Berechtigungen und Bambu-Studio-Fenster prüfen (keine Klicks)."""
     info = gui_macos.check(expected)
     data: dict[str, Any] = info.to_dict()
-    emit(data, lambda: [console.print(f"{k}: {v}") for k, v in data.items()])
+    emit(data, lambda: [console.print(esc(f"{k}: {v}")) for k, v in data.items()])
 
 
 def main() -> None:

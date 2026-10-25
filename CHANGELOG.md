@@ -9,6 +9,14 @@ All notable changes to this project are documented here. The format follows
 - Detecting Bambu Studio (`doctor` and every command that probes `--help`) no longer leaves a
   `result.json` in the current directory: Bambu Studio writes one even for `--help`, so the probe now
   runs in a temporary directory.
+- Human-readable output no longer swallows text in square brackets. Profile names, paths, 3MF metadata
+  and error messages were passed through Rich markup, so the project-copy suffix
+  `[bambu-butler <job>]` disappeared from `inspect` and a name like `Foo [/x]` could break the output.
+
+### Verified
+- macOS, Bambu Studio 02.08.02.61: `prepare` exports an unsliced 3MF with the plan's settings in
+  `Metadata/project_settings.config`; `slice` with that 3MF as input succeeds (42 min 6 s, 11.26 g PLA,
+  read from `slice_info.config`).
 
 ### Documentation
 - README reworked: status section with the verified real slice run, quick start, architecture diagram,

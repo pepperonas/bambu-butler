@@ -198,3 +198,24 @@ def test_settings_precedence(tmp_path, monkeypatch):
     assert str(load_settings(config_path=cfg, autodetect=False).studio_executable) == "/env/studio"
     s = load_settings({"studio_executable": "/cli/studio"}, config_path=cfg, autodetect=False)
     assert str(s.studio_executable) == "/cli/studio" and s.sources["studio_executable"] == "cli"
+
+
+# Values from files, profiles and paths go through Rich markup in human mode; brackets such as the
+# project-copy suffix "[bambu-butler <job>]" must appear verbatim instead of being swallowed as tags.
+def test_human_output_keeps_brackets_from_3mf_metadata(resources, tmp_path):
+    from .conftest import make_3mf
+
+    model = make_3mf(tmp_path / "[teil] halter.3mf", project={
+        "printer_settings_id": "Bambu Lab A1 mini 0.4 nozzle",
+        "print_settings_id": "0.20mm Standard @BBL A1M [bambu-butler halter]"})
+    r = runner.invoke(app, ["--resources", str(resources), "inspect", str(model)], env={"COLUMNS": "400"})
+    assert r.exit_code == 0, r.output
+    assert "0.20mm Standard @BBL A1M [bambu-butler halter]" in r.output
+    assert "Modell: [teil] halter.3mf" in r.output
+
+
+def test_human_error_keeps_brackets(resources, tmp_path):
+    r = runner.invoke(app, ["--resources", str(resources), "profiles", "show", "Foo [bold]x[/bold]"],
+                      env={"COLUMNS": "400"})
+    assert r.exit_code == 1
+    assert "Foo [bold]x[/bold]" in r.output
