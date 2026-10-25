@@ -49,8 +49,9 @@ Legend: ✅ implemented and tested · ✅✔ verified with a real Bambu Studio i
 | Blocking open questions stop `prepare`/`slice` | ✅ |
 | Job folder, changes, command log, Markdown/JSON report | ✅ |
 | Dry run, timeouts (process group killed), `--json` | ✅ |
+| Exit codes: CLI_* table, POSIX signals and Windows NTSTATUS reported as crashes | ✅ (SIGSEGV seen for real) |
 | `prepare`: export unsliced 3MF via CLI | ✅✔ (2026-10-25) |
-| `slice` with 3MF input | ✅✔ single-colour, own prepared 3MF (2026-10-25) · multi-colour/AMS 🧪 not yet verified |
+| `slice` with 3MF input | ✅✔ single-colour, own prepared 3MF (2026-10-25) · multi-colour on A1 mini: ❌ Bambu Studio 02.08.02.61 CLI segfaults, also without Bambu Butler (see `troubleshooting.md`) |
 | `slice`: slice all plates via CLI, parse `result.json` + `slice_info.config` | ✅✔ (STL input) |
 | Bed type selection | ❌ |
 | Per-object settings / modifiers / multiple plates in plan | ❌ |

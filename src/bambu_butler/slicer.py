@@ -9,11 +9,13 @@ dashes), ``src/libslic3r/Utils.hpp`` (CLI_* return codes) and
 from __future__ import annotations
 
 import json
+import signal
 import xml.etree.ElementTree as ET
 import zipfile
 from pathlib import Path
 
 from .errors import UnsafeArgumentError
+from .platforms import current_os
 
 CLI_ERRORS: dict[int, tuple[str, str]] = {
     0: ("CLI_SUCCESS", "Erfolgreich."),
@@ -65,11 +67,30 @@ CLI_ERRORS: dict[int, tuple[str, str]] = {
 }
 
 
-def describe_exit(code: int | None) -> dict:
+def describe_exit(code: int | None, *, os_name: str | None = None) -> dict:
+    """Map a process return code to Bambu Studio's CLI_* code, or to a crash.
+
+    Bambu's codes are negative ints passed to ``exit()``. POSIX delivers them modulo 256, so a
+    *negative* Python return code there can only mean death by signal (observed: segfault = -11).
+    Windows delivers the full 32-bit value unsigned; values from 0xC0000000 are NTSTATUS crashes.
+    """
     if code is None:
         return {"code": None, "name": None, "message": "Kein Rückgabewert (Zeitüberschreitung)."}
-    # Exit codes are negative in the sources; POSIX reports them modulo 256.
-    signed = code - 256 if code > 127 else code
+    os_name = os_name or current_os()
+    if os_name == "windows":
+        if code >= 0xC0000000 and -(2**32 - code) not in CLI_ERRORS:
+            return {"code": code, "name": f"NTSTATUS_0x{code:08X}",
+                    "message": f"Bambu Studio ist abgestürzt (Windows-Ausnahme 0x{code:08X})."}
+        signed = code - 2**32 if code >= 2**31 else code
+    elif code < 0:
+        try:
+            sig_name = signal.Signals(-code).name
+        except ValueError:
+            sig_name = f"SIGNAL_{-code}"
+        return {"code": code, "name": sig_name, "signal": -code,
+                "message": f"Bambu Studio ist abgestürzt (Signal {sig_name}). Kein CLI-Fehlercode."}
+    else:
+        signed = code - 256 if code > 127 else code
     name, message = CLI_ERRORS.get(signed, ("UNKNOWN", f"Unbekannter Rückgabewert {signed}."))
     return {"code": signed, "name": name, "message": message}
 

@@ -76,10 +76,26 @@ def test_timeout_kills_process():
 
 
 def test_describe_exit_handles_posix_wraparound():
-    assert slicer.describe_exit(0)["name"] == "CLI_SUCCESS"
-    assert slicer.describe_exit(256 - 100)["name"] == "CLI_SLICING_ERROR"
-    assert slicer.describe_exit(-17)["name"] == "CLI_PROCESS_NOT_COMPATIBLE"
+    assert slicer.describe_exit(0, os_name="macos")["name"] == "CLI_SUCCESS"
+    assert slicer.describe_exit(256 - 100, os_name="linux")["name"] == "CLI_SLICING_ERROR"
+    assert slicer.describe_exit(250, os_name="macos")["name"] == "CLI_DATA_FILE_ERROR"
     assert slicer.describe_exit(None)["code"] is None
+
+
+def test_describe_exit_reports_posix_signals_as_crash():
+    # Python reports death by signal as a negative return code; Bambu's own codes arrive modulo 256.
+    # Observed: Bambu Studio 02.08.02.61 segfaulting showed up as -11, not CLI_EXPORT_STL_ERROR.
+    info = slicer.describe_exit(-11, os_name="macos")
+    assert info["name"] == "SIGSEGV" and info["signal"] == 11
+    assert "abgestürzt" in info["message"]
+    assert slicer.describe_exit(-9, os_name="linux")["name"] == "SIGKILL"
+
+
+def test_describe_exit_handles_windows_unsigned_codes():
+    assert slicer.describe_exit(2**32 - 6, os_name="windows")["name"] == "CLI_DATA_FILE_ERROR"
+    assert slicer.describe_exit(-17, os_name="windows")["name"] == "CLI_PROCESS_NOT_COMPATIBLE"
+    crash = slicer.describe_exit(0xC0000005, os_name="windows")
+    assert crash["name"] == "NTSTATUS_0xC0000005" and "abgestürzt" in crash["message"]
 
 
 def test_slice_info_parsing(tmp_path):
