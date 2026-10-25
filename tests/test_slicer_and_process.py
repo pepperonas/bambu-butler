@@ -118,6 +118,14 @@ def test_detect_missing_executable(tmp_path):
     assert not studio.detect(None).cli_usable
 
 
+def test_detect_leaves_working_directory_clean(fake_studio, tmp_path, monkeypatch):
+    work = tmp_path / "work"
+    work.mkdir()
+    monkeypatch.chdir(work)
+    assert studio.detect(fake_studio).cli_usable
+    assert list(work.iterdir()) == []
+
+
 def test_detect_fake_studio(fake_studio):
     info = studio.detect(fake_studio)
     assert info.cli_usable and info.version == "02.08.04.57"

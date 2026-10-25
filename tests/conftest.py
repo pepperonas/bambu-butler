@@ -159,6 +159,9 @@ if "--help" in args:
               "--load-filaments \"f.json\"", "--outputdir dir", "--orient", "--arrange option",
               "--scale factor", "--rotate", "--rotate-x", "--rotate-y", "--ensure-on-bed", "--debug level"]:
         print("  " + o)
+    # Real Bambu Studio (02.08.02.61, observed) also writes result.json into its working directory on --help.
+    with open("result.json", "w") as fh:
+        json.dump({"return_code": 0, "error_string": "Success."}, fh)
     sys.exit(0)
 with open(os.environ["FAKE_STUDIO_LOG"], "w") as fh:
     json.dump(args, fh)

@@ -5,6 +5,11 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Fixed
+- Detecting Bambu Studio (`doctor` and every command that probes `--help`) no longer leaves a
+  `result.json` in the current directory: Bambu Studio writes one even for `--help`, so the probe now
+  runs in a temporary directory.
+
 ### Documentation
 - README reworked: status section with the verified real slice run, quick start, architecture diagram,
   configuration table, platform matrix, troubleshooting and badges.

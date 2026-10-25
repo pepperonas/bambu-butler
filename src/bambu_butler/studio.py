@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import plistlib
 import re
+import tempfile
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -98,7 +99,10 @@ def detect(executable: Path | None, *, timeout: float = 60) -> StudioInfo:
         info.version, info.version_source = bundle_version, "Info.plist"
 
     try:
-        result = process.run([str(executable), "--help"], timeout=timeout)
+        # Bambu Studio writes result.json into its working directory even for --help (observed with
+        # 02.08.02.61); run it in a throwaway directory so the user's folder stays clean.
+        with tempfile.TemporaryDirectory(prefix="bambu-butler-help-") as scratch:
+            result = process.run([str(executable), "--help"], timeout=timeout, cwd=Path(scratch))
     except OSError as exc:
         info.problems.append(f"Bambu Studio konnte nicht gestartet werden: {exc}")
         return info
