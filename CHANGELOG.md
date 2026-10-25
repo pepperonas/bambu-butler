@@ -12,7 +12,6 @@ All notable changes to this project are documented here. The format follows
 - Human-readable output no longer swallows text in square brackets. Profile names, paths, 3MF metadata
   and error messages were passed through Rich markup, so the project-copy suffix
   `[bambu-butler <job>]` disappeared from `inspect` and a name like `Foo [/x]` could break the output.
-
 - A crash of Bambu Studio was reported as a CLI error: a segfault arrives as return code -11 and was shown
   as `CLI_EXPORT_STL_ERROR`. Negative codes on macOS/Linux are now reported as the signal (e.g. `SIGSEGV`),
   and Windows codes are read as unsigned 32-bit values (`exit(-6)` = 4294967290; NTSTATUS crashes from
