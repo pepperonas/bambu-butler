@@ -92,7 +92,15 @@ def _terminate(proc: subprocess.Popen) -> None:
             except subprocess.TimeoutExpired:
                 continue
     else:  # pragma: no cover - Windows only
-        proc.kill()
+        # proc.kill() ends only the top process; children would keep the pipes open and communicate()
+        # would block until they exit. taskkill /T ends the whole tree.
+        try:
+            subprocess.run(["taskkill", "/F", "/T", "/PID", str(proc.pid)], stdin=subprocess.DEVNULL,
+                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=10, shell=False)
+        except (OSError, subprocess.TimeoutExpired):
+            pass
+        if proc.poll() is None:
+            proc.kill()
 
 
 def spawn_detached(argv: list) -> None:

@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 
 import pytest
 from typer.testing import CliRunner
@@ -195,9 +196,9 @@ def test_settings_precedence(tmp_path, monkeypatch):
     assert s.studio_executable.name == "from-config" and s.timeout_seconds == 5
     assert s.jobs_dir == tmp_path / "j"
     monkeypatch.setenv("BAMBU_BUTLER_STUDIO", "/env/studio")
-    assert str(load_settings(config_path=cfg, autodetect=False).studio_executable) == "/env/studio"
+    assert load_settings(config_path=cfg, autodetect=False).studio_executable == Path("/env/studio")
     s = load_settings({"studio_executable": "/cli/studio"}, config_path=cfg, autodetect=False)
-    assert str(s.studio_executable) == "/cli/studio" and s.sources["studio_executable"] == "cli"
+    assert s.studio_executable == Path("/cli/studio") and s.sources["studio_executable"] == "cli"
 
 
 # Values from files, profiles and paths go through Rich markup in human mode; brackets such as the

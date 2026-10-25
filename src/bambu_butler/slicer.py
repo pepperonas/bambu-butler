@@ -67,6 +67,21 @@ CLI_ERRORS: dict[int, tuple[str, str]] = {
 }
 
 
+# Signal numbers shared by Linux and macOS; the host's ``signal`` module is only a fallback (Windows
+# lacks SIGKILL, and numbers like SIGBUS differ between the two POSIX systems).
+_POSIX_SIGNALS = {1: "SIGHUP", 2: "SIGINT", 3: "SIGQUIT", 4: "SIGILL", 5: "SIGTRAP", 6: "SIGABRT",
+                  8: "SIGFPE", 9: "SIGKILL", 11: "SIGSEGV", 13: "SIGPIPE", 14: "SIGALRM", 15: "SIGTERM"}
+
+
+def _signal_name(number: int) -> str:
+    if number in _POSIX_SIGNALS:
+        return _POSIX_SIGNALS[number]
+    try:
+        return signal.Signals(number).name
+    except ValueError:
+        return f"SIGNAL_{number}"
+
+
 def describe_exit(code: int | None, *, os_name: str | None = None) -> dict:
     """Map a process return code to Bambu Studio's CLI_* code, or to a crash.
 
@@ -83,10 +98,7 @@ def describe_exit(code: int | None, *, os_name: str | None = None) -> dict:
                     "message": f"Bambu Studio ist abgestürzt (Windows-Ausnahme 0x{code:08X})."}
         signed = code - 2**32 if code >= 2**31 else code
     elif code < 0:
-        try:
-            sig_name = signal.Signals(-code).name
-        except ValueError:
-            sig_name = f"SIGNAL_{-code}"
+        sig_name = _signal_name(-code)
         return {"code": code, "name": sig_name, "signal": -code,
                 "message": f"Bambu Studio ist abgestürzt (Signal {sig_name}). Kein CLI-Fehlercode."}
     else:

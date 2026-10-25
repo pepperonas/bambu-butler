@@ -16,6 +16,13 @@ All notable changes to this project are documented here. The format follows
   as `CLI_EXPORT_STL_ERROR`. Negative codes on macOS/Linux are now reported as the signal (e.g. `SIGSEGV`),
   and Windows codes are read as unsigned 32-bit values (`exit(-6)` = 4294967290; NTSTATUS crashes from
   0xC0000000 are named as such) instead of being reduced modulo 256.
+- Windows: a timeout now ends the whole process tree (`taskkill /T`) instead of only the top process,
+  whose children could keep the pipes open and block until they exited.
+
+### Tests
+- CI was red on Windows since 0.0.1: the Bambu Studio test double is a shebang script, which Windows
+  cannot run, so 8 tests saw "Bambu Studio not found". It now gets a `.cmd` launcher there. Path and
+  signal-name assertions no longer depend on the host OS. New test: a timeout also kills child processes.
 
 ### Verified
 - macOS, Bambu Studio 02.08.02.61: `prepare` exports an unsliced 3MF with the plan's settings in

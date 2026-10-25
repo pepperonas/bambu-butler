@@ -201,10 +201,16 @@ result(0, "Success.")
 def fake_studio(tmp_path: Path, monkeypatch) -> Path:
     d = tmp_path / "Fake Studio.app dir"
     d.mkdir()
+    monkeypatch.setenv("FAKE_STUDIO_LOG", str(tmp_path / "fake-argv.json"))
+    if os.name == "nt":  # Windows cannot execute a shebang script; wrap it in a .cmd launcher.
+        script = d / "bambu-studio.py"
+        script.write_text(textwrap.dedent(FAKE_STUDIO), encoding="utf-8")
+        launcher = d / "bambu-studio.cmd"
+        launcher.write_text(f'@"{sys.executable}" "%~dp0bambu-studio.py" %*\r\n', encoding="utf-8")
+        return launcher
     script = d / "bambu-studio"
     script.write_text(f"#!{sys.executable}\n" + textwrap.dedent(FAKE_STUDIO), encoding="utf-8")
     script.chmod(script.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
-    monkeypatch.setenv("FAKE_STUDIO_LOG", str(tmp_path / "fake-argv.json"))
     return script
 
 

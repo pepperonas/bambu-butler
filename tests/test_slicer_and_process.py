@@ -21,7 +21,7 @@ def cmd(tmp_path, **kw):
 def test_command_is_argument_list_with_spaces(tmp_path):
     argv = cmd(tmp_path)
     assert argv[0].endswith("BambuStudio") and " " in argv[0]
-    assert argv[-1].endswith("input/my model.stl")
+    assert Path(argv[-1]).parts[-2:] == ("input", "my model.stl")
     i = argv.index("--load-settings")
     assert argv[i + 1].count(";") == 1 and "job dir with spaces" in argv[i + 1]
     assert argv[argv.index("--slice") + 1] == "0"
@@ -68,6 +68,14 @@ def test_argv_validation():
         process.ensure_argv("echo hi")  # type: ignore[arg-type]
     with pytest.raises(UnsafeArgumentError):
         process.ensure_argv(["a\x00b"])
+
+
+def test_timeout_kills_child_processes():
+    # The child inherits stdout; if only the parent dies, communicate() waits for the child's 30 s.
+    child = ("import subprocess, sys, time; "
+             "subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(30)']); time.sleep(30)")
+    result = process.run([sys.executable, "-c", child], timeout=1)
+    assert result.timed_out and result.duration_seconds < 15
 
 
 def test_timeout_kills_process():
