@@ -19,6 +19,10 @@ All notable changes to this project are documented here. The format follows
 - Windows: a timeout now ends the whole process tree (`taskkill /T`) instead of only the top process,
   whose children could keep the pipes open and block until they exited.
 
+- `open --check-gui` waited a fixed 3 s and said nothing when Bambu Studio had no window yet. It now
+  polls for up to 30 s (wall-clock) and reports `expected_found`; an empty window list is a problem,
+  not a pass.
+
 ### Tests
 - CI was red on Windows since 0.0.1: the Bambu Studio test double is a shebang script, which Windows
   cannot run, so 8 tests saw "Bambu Studio not found". It now gets a `.cmd` launcher there. Path and
@@ -30,7 +34,11 @@ All notable changes to this project are documented here. The format follows
   read from `slice_info.config`).
 - Known Bambu Studio 02.08.02.61 problems, reproducible with the bare CLI: slicing with objects on two
   filament slots on the A1 mini segfaults; binary STLs with zero normals and a small footprint fail to load.
-  Documented in `docs/troubleshooting.md`.
+  Documented in `docs/troubleshooting.md`. Cause of the multi-filament crash: `filament_colour` defaults to
+  a single entry; passing `--filament-colour` on the command line avoids it and makes the CLI compute the
+  flush matrix from the colours.
+- `open` on macOS: launch, permissions and cold start verified; window titles can stay stale when a
+  second project opens in the same window.
 
 ### Documentation
 - README reworked: status section with the verified real slice run, quick start, architecture diagram,

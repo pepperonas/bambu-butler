@@ -112,7 +112,7 @@ BambuStudio [--rotate-x X] [--rotate-y Y] [--rotate Z] [--scale F] [--ensure-on-
 ## `open PROJECT [--dry-run] [--check-gui]`
 
 macOS: `open -a <BambuStudio.app> <file>`; Windows: executable with the file; Linux: executable or `xdg-open`.
-`--check-gui` (macOS) waits 3 s and reports permissions and window titles.
+`--check-gui` (macOS) waits up to 30 s for a window whose title contains the project name and reports permissions, window titles and `expected_found`. A cold start took about 8 s with Bambu Studio 02.08.02.61.
 
 ## `schema [-o FILE]`, `gui check [--expect NAME]`, `printer status`, `printer start`
 

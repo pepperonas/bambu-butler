@@ -490,10 +490,7 @@ def open_(
     settings = state.settings()
     data = opener.open_project(project, settings.studio_executable, dry_run=dry_run)
     if check_gui and not dry_run:
-        import time
-
-        time.sleep(3)
-        data["gui"] = gui_macos.check(expected_file=project.stem).to_dict()
+        data["gui"] = gui_macos.wait_for_window(project.stem, timeout=30).to_dict()
     data["manual_next_steps"] = [gui_macos.MANUAL_STEPS["dialog"], gui_macos.MANUAL_STEPS["send"]]
 
     def render():

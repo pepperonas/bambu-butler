@@ -26,5 +26,15 @@ Instead it prints manual steps, e.g. "In Bambu Studio 'Platte slicen' klicken un
   (or Claude Code) to control "System Events".
 - **Accessibility**: System Settings → Privacy & Security → Accessibility → enable your terminal.
 
-`bambu-butler gui check` reports missing permissions in German. The adapter has not yet been run on a
-real Mac in this release; treat its output as advisory.
+`bambu-butler gui check` reports missing permissions in German.
+
+## Verified behaviour (macOS, Bambu Studio 02.08.02.61, 2026-10-25)
+
+- `open` launches Bambu Studio and loads the project; permissions were detected correctly.
+- A cold start took about 8 s until the project window existed. `open --check-gui` therefore polls for
+  up to 30 s (wall-clock) instead of checking once after a fixed pause.
+- **Stale window title:** when a running Bambu Studio opened a second project into the same window,
+  the window visibly showed the new project, but Accessibility still reported the old title. The check
+  then says "not confirmed" although the right project is open. `expected_found` is a hint only.
+- Quitting Bambu Studio via AppleScript returned "User cancelled (-128)" while the screen was locked;
+  the adapter never quits the app.

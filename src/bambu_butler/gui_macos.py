@@ -14,6 +14,8 @@ The core workflow (prepare + slice via CLI) never depends on this module.
 
 from __future__ import annotations
 
+import shutil
+import time
 from dataclasses import dataclass, field
 
 from . import process
@@ -30,6 +32,7 @@ class GuiCheck:
     accessibility_permission: bool | None = None
     app_running: bool | None = None
     window_titles: list[str] = field(default_factory=list)
+    expected_found: bool | None = None
     problems: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict:
@@ -48,8 +51,6 @@ def check(expected_file: str | None = None) -> GuiCheck:
     if not info.supported_os:
         info.problems.append("GUI-Automation ist nur für macOS implementiert.")
         return info
-    import shutil
-
     info.osascript = shutil.which("osascript") is not None
     if not info.osascript:
         info.problems.append("osascript wurde nicht gefunden.")
@@ -75,10 +76,39 @@ def check(expected_file: str | None = None) -> GuiCheck:
             f'tell application "System Events" to tell process "{APP_NAME}" to get name of every window')
         if ok and out:
             info.window_titles = [t.strip() for t in out.split(",") if t.strip()]
-    if expected_file and info.window_titles and not any(expected_file in t for t in info.window_titles):
-        info.problems.append(
-            f"Kein Bambu-Studio-Fenster zeigt '{expected_file}'. Möglicherweise ist ein Dialog offen "
-            "(z. B. Speichern/Update). Es wird nichts automatisch bestätigt.")
+    if expected_file and info.app_running and info.accessibility_permission:
+        info.expected_found = any(expected_file in t for t in info.window_titles)
+        if not info.window_titles:
+            info.problems.append(
+                f"Bambu Studio zeigt noch kein Fenster, '{expected_file}' ist also nicht bestätigt. "
+                "Beim ersten Start kann das Laden einige Sekunden dauern.")
+        elif not info.expected_found:
+            info.problems.append(
+                f"Kein Bambu-Studio-Fenster zeigt '{expected_file}'. Möglicherweise ist ein Dialog offen "
+                "(z. B. Speichern/Update). Es wird nichts automatisch bestätigt.")
+    return info
+
+
+def wait_for_window(expected_file: str, *, timeout: float = 30, interval: float = 1) -> GuiCheck:
+    """Poll :func:`check` until a window title contains ``expected_file`` or ``timeout`` passes.
+
+    A cold start of Bambu Studio 02.08.02.61 took about 8 s until the project window existed, so a
+    fixed short pause reports an empty window list. Stops early on permission problems. The limit is
+    wall-clock time: each check itself takes about 0.8 s of osascript calls.
+
+    Known limit: when a running Bambu Studio switches to another project in the same window, the
+    Accessibility title can keep the old project name (seen with 02.08.02.61), so ``expected_found``
+    may be ``False`` although the right project is shown. It is a hint, never a guarantee.
+    """
+    deadline = time.monotonic() + timeout
+    info = check(expected_file)
+    while not info.expected_found and info.app_running and info.accessibility_permission:
+        if time.monotonic() + interval > deadline:
+            break
+        time.sleep(interval)
+        info = check(expected_file)
+    if info.expected_found is False:
+        info.problems.append(f"Nach {timeout:.0f} s Warten weiterhin nicht bestätigt.")
     return info
 
 

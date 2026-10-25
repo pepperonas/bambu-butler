@@ -60,8 +60,8 @@ Legend: ✅ implemented and tested · ✅✔ verified with a real Bambu Studio i
 
 | Feature | Status |
 |---|---|
-| Open project via OS (`open -a`, executable, `xdg-open`) | 🧪 command tested, launch not yet verified |
-| macOS: check Automation/Accessibility permissions, app running, window titles | 🧪 |
+| Open project via OS (`open -a`, executable, `xdg-open`) | ✅✔ macOS (2026-10-25) |
+| macOS: check Automation/Accessibility permissions, app running, window titles | ✅✔ permissions and cold start · ⚠️ title can stay stale when a second project opens in the same window |
 | Automated clicks/keystrokes (slice button, dialogs) | ❌ deliberately; manual instructions instead |
 
 ## Printer

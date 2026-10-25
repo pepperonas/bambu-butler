@@ -57,8 +57,20 @@ nachstellen (geprüft am 2026-10-25).
   Filamentprofilen, bei dem Objekte wirklich auf Slot 1 und 2 verteilt sind, stürzt ab, direkt nach
   `update_filament_maps_to_config` im Log. Das gilt für ein Mehrfarb-3MF genauso wie für zwei STLs mit
   `--load-filament-ids "1,2"`. Zwei Filamentprofile, aber alle Objekte auf Slot 1, slicen normal.
-  Abhilfe: Mehrfarb-Projekte in der Bambu-Studio-Oberfläche slicen (`bambu-butler prepare`, dann
-  `open`). Andere Drucker wurden nicht geprüft.
+  **Ursache:** `filament_colour` hat in `PrintConfig.cpp` (v02.08.02.61) die Voreinstellung
+  `{"#00AE42"}`, also genau einen Eintrag, und die CLI verlängert die Liste nicht auf die Zahl der
+  Filamente. **Abhilfe, mit der nackten CLI geprüft:** die Farben auf der Kommandozeile übergeben,
+  `--filament-colour "#00AE42;#FF6A13"`. Dann rechnet die CLI die Spülmengen-Matrix wie die Oberfläche
+  aus den Farben aus (`calc_flush_vol`, im Test 2 × 2 mit 318/234 mm³ statt der festen 4 × 4-Voreinstellung)
+  und slict sauber (Beispiel: 12,4 g + 10,43 g). Nur die Farben in die Filamentprofile zu schreiben
+  verhindert zwar den Absturz, lässt aber die 4 × 4-Matrix stehen; die Spülmengen stimmen dann nicht.
+  Bambu Butler übergibt die Farben noch nicht; bis dahin Mehrfarb-Projekte in der Oberfläche slicen
+  (`bambu-butler prepare`, dann `open`). Andere Drucker wurden nicht geprüft.
+- **Slicen aus STL hängt bei „glfwInit Success.“** Nach dem Slicen erzeugt die CLI Vorschaubilder
+  über OpenGL. Am 2026-10-25 hing dieser Schritt bei gesperrtem Bildschirm und gleichzeitig offener
+  Bambu-Studio-Oberfläche ohne CPU-Last, auch bei einem Lauf, der vorher durchging. Welche der beiden
+  Bedingungen es auslöst, ist nicht geklärt. 3MF-Eingaben, die schon Vorschaubilder enthalten,
+  waren nicht betroffen. Das Zeitlimit (`--timeout`) beendet den Lauf sauber mit `slicer_timeout`.
 - **Binär-STL mit Nullvektor als Normale und kleiner Grundfläche → `CLI_DATA_FILE_ERROR`.** Ein
   Würfel mit X und Y ≤ 15 mm wurde abgelehnt, derselbe Würfel mit berechneten Normalen oder als ASCII-STL
   nicht; 15 × 20 mm ging auch mit Null-Normalen. `inspect` meldet solche Dateien als in Ordnung. Abhilfe:
