@@ -172,7 +172,8 @@ def result(code, msg):
     with open(os.path.join(outdir, "result.json"), "w") as fh:
         json.dump({"return_code": code, "error_string": msg, "sliced_plates": [
             {"id": 1, "total_predication": 1234.0, "filaments": [{"id": 1, "total_used_g": 9.5}]}] if code == 0 else []}, fh)
-    sys.exit(code & 0xFF)
+    # exit() with a negative int: POSIX reports it modulo 256, Windows as an unsigned 32-bit value.
+    sys.exit(code if os.name == "nt" else code & 0xFF)
 for f in opt("--load-settings").split(";") + opt("--load-filaments").split(";"):
     if not os.path.isfile(f):
         result(-3, "file not found")

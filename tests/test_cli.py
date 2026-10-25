@@ -126,7 +126,7 @@ def test_slice_with_fake_studio(resources, plan_file, tmp_path, fake_studio):
     assert job["status"] == "sliced" and job["print_started"] is False
     assert job["result"]["print_time_seconds"] == 3723 and job["result"]["filament_g"] == 12.34
     argv = json.loads((tmp_path / "fake-argv.json").read_text())
-    assert argv[-1].endswith("input/halter mit leerzeichen.stl")
+    assert Path(argv[-1]).parts[-2:] == ("input", "halter mit leerzeichen.stl")
     report = (tmp_path / "jobs out").glob("*/report.md")
     assert "Erfolgreich von Bambu Studio geslict" in next(report).read_text()
 
