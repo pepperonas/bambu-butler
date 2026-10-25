@@ -7,8 +7,9 @@ Erster Schritt immer: `bambu-butler doctor` und bei Aufträgen `report.md` sowie
 | Symptom | Ursache | Lösung |
 |---|---|---|
 | `ERROR: file or directory not found: #` (pytest) | zsh übergibt `# Kommentar` als Argument | Zeile ohne Kommentar ausführen oder `setopt interactivecomments` |
-| `command not found: bambu-butler` | Nicht global installiert | `uv tool install --from . bambu-butler`, ggf. `uv tool update-shell` |
-| Alte Version nach `git pull` | Tool-Installation ist eine Kopie | `uv tool install --force --from . bambu-butler` |
+| `command not found: bambu-butler` | Nicht global installiert | `uv tool install --editable --from . bambu-butler`, ggf. `uv tool update-shell` |
+| Alte Version nach `git pull` | Tool ohne `--editable` installiert, also eine Kopie | `uv tool install --editable --force --from . bambu-butler` |
+| Claude kennt die Skill außerhalb des Repos nicht | Skill liegt nur im Projekt | `ln -s "$PWD/.claude/skills/bambu-butler" ~/.claude/skills/bambu-butler`, Sitzung neu starten |
 | `Bambu Studio wurde nicht gefunden` | App nicht unter `/Applications` | `--studio`, `BAMBU_BUTLER_STUDIO` oder `bambu-butler.json` |
 | `Keine Profilquelle gefunden` | Ressourcen-/Datenordner unbekannt | `--resources /Applications/BambuStudio.app/Contents/Resources` |
 | `'--help' hat nach 60s nicht geantwortet` | Erster Start von Bambu Studio, Gatekeeper-Dialog | App einmal normal öffnen, Dialoge bestätigen |

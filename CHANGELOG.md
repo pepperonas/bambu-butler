@@ -53,6 +53,8 @@ All notable changes to this project are documented here. The format follows
   configuration table, platform matrix, troubleshooting and badges.
 - New `docs/cli.md` (full command reference) and `docs/troubleshooting.md`.
 - `docs/features.md` updated with verification results.
+- Installation: `uv tool install --editable` so the global command follows the repository, and a
+  symlink into `~/.claude/skills/` to use the skill in any folder. README status table updated.
 - The STL slice hang at "glfwInit Success." is caused by a locked screen: with the screen unlocked and the
   Bambu Studio GUI still open, the same plan slices in 2 s.
 

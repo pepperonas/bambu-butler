@@ -100,9 +100,12 @@ git clone https://github.com/pepperonas/bambu-butler.git
 cd bambu-butler
 uv sync
 uv run pytest -q
-uv tool install --from . bambu-butler
+uv tool install --editable --from . bambu-butler
 bambu-butler doctor --strict
 ```
+
+`--editable` verknüpft den Befehl `bambu-butler` mit dem Repository: nach einem `git pull` gilt der neue
+Stand sofort. Ohne `--editable` installiert uv eine Kopie, die bei jedem Update neu installiert werden muss.
 
 Erster Auftrag mit dem mitgelieferten Demo-Modell:
 
@@ -122,14 +125,25 @@ Aktualisieren:
 ```bash
 git pull
 uv sync
-uv tool install --force --from . bambu-butler
 ```
+
+Eine `--editable`-Installation muss nur neu installiert werden, wenn sich die Abhängigkeiten in
+`pyproject.toml` ändern: `uv tool install --editable --force --from . bambu-butler`.
 
 ## Mit Claude Code nutzen
 
 1. `claude` im Repository-Ordner starten. Die Skill unter
    [`.claude/skills/bambu-butler/`](.claude/skills/bambu-butler/SKILL.md) wird automatisch erkannt
-   und kann auch explizit mit `/bambu-butler` aufgerufen werden.
+   und kann auch explizit mit `/bambu-butler` aufgerufen werden. Damit sie in **jedem** Ordner
+   verfügbar ist (etwa dort, wo deine Modelle liegen), einmalig verlinken:
+
+   ```bash
+   mkdir -p ~/.claude/skills
+   ln -s "$PWD/.claude/skills/bambu-butler" ~/.claude/skills/bambu-butler
+   ```
+
+   Der Symlink zeigt auf das Repository, Änderungen an der Skill gelten damit sofort. Sie greift in
+   neu gestarteten Claude-Code-Sitzungen; dafür muss `bambu-butler` global installiert sein (siehe oben).
 2. Den Druckwunsch formulieren:
 
 ```text
@@ -350,9 +364,10 @@ Vollständige Übersicht: [`docs/features.md`](docs/features.md).
 | Auftragsordner, Änderungsliste, Bericht, Dry-Run, Timeouts, `--json` | ✅ |
 | Slicen über die Bambu-Studio-CLI | ✅ verifiziert mit 02.08.02.61 |
 | Druckzeit und Filament aus echter Slicer-Ausgabe | ✅ verifiziert |
-| Ungeslicter Projekt-Export (`prepare`) | 🧪 implementiert, noch nicht auf echter Installation geprüft |
-| Öffnen in Bambu Studio | 🧪 implementiert, noch nicht verifiziert |
-| macOS-GUI-Adapter | ⚠️ nur Aktivieren, Fenster und Berechtigungen prüfen |
+| Ungeslicter Projekt-Export (`prepare`) | ✅ verifiziert |
+| Slicen aus 3MF, auch mehrfarbig (Farbe je Filament) | ✅ verifiziert (A1 mini, zwei Farben) |
+| Öffnen in Bambu Studio | ✅ verifiziert |
+| macOS-GUI-Adapter | ⚠️ nur Aktivieren, Fenster und Berechtigungen prüfen; Fenstertitel nur ein Hinweis |
 | Druckersteuerung (senden, starten, pausieren, Temperaturen) | ❌ bewusst nicht implementiert – [`docs/printer-control.md`](docs/printer-control.md) |
 
 ## Einschränkungen
