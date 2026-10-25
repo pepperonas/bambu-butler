@@ -16,7 +16,7 @@
 | `printer.profile` | yes | Exact machine profile name |
 | `printer.nozzle_diameter_mm` | no | Checked against the profile |
 | `process.profile` | yes | Exact process profile name, must be compatible |
-| `filaments[]` | yes (1–32) | `{profile, material?}`; order = filament slots 1..n |
+| `filaments[]` | yes (1–32) | `{profile, material?, colour?}`; order = filament slots 1..n. `colour` is `#RRGGBB`; with several filaments Bambu Studio computes the flush volumes from it. Missing colours come from the 3MF project, else from a fixed default palette (warning `filament_colour_default`). |
 | `settings` | no | Friendly settings, see below |
 | `overrides.process/filament/machine` | no | Raw Bambu keys; must exist in the resolved base profile |
 | `transform` | no | `rotate_x_deg`, `rotate_y_deg`, `rotate_z_deg`, `scale`, `auto_orient`, `arrange` |

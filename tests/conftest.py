@@ -182,6 +182,13 @@ for f in opt("--load-settings").split(";") + opt("--load-filaments").split(";"):
         result(-5, "config error")
 if not os.path.isfile(args[-1]):
     result(-3, "model not found")
+# Mimics Bambu Studio 02.08.02.61 (observed): several filaments need one colour each, both in the
+# loaded profiles and via --filament-colour; otherwise the real CLI crashes or exits with -5.
+fil = opt("--load-filaments").split(";")
+if len(fil) > 1:
+    cols = (opt("--filament-colour") or "").split(";")
+    if len(cols) != len(fil) or any(len(json.load(open(f)).get("filament_colour", [])) != 1 for f in fil):
+        result(-5, "filament_is_support's count %d not equal to filament_colour's size 1" % len(fil))
 if mode == "hang":
     time.sleep(60)
 if mode == "fail":

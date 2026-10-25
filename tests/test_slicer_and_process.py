@@ -29,6 +29,15 @@ def test_command_is_argument_list_with_spaces(tmp_path):
     assert all(isinstance(a, str) for a in argv)
 
 
+def test_filament_colour_only_with_several_filaments(tmp_path):
+    assert "--filament-colour" not in cmd(tmp_path, filament_colours=["#00AE42"])
+    two = [tmp_path / "f1.json", tmp_path / "f2.json"]
+    argv = cmd(tmp_path, filaments=two, filament_colours=["#00AE42", "#FF6A13"])
+    assert argv[argv.index("--filament-colour") + 1] == "#00AE42;#FF6A13"
+    with pytest.raises(UnsafeArgumentError):
+        cmd(tmp_path, filaments=two, filament_colours=["#00AE42", "x;--debug"])
+
+
 def test_prepare_mode_has_no_slice(tmp_path):
     assert "--slice" not in cmd(tmp_path, slice_plates=False)
 

@@ -9,6 +9,7 @@ dashes), ``src/libslic3r/Utils.hpp`` (CLI_* return codes) and
 from __future__ import annotations
 
 import json
+import re
 import signal
 import xml.etree.ElementTree as ET
 import zipfile
@@ -16,6 +17,8 @@ from pathlib import Path
 
 from .errors import UnsafeArgumentError
 from .platforms import current_os
+
+_COLOUR = re.compile(r"^#[0-9A-Fa-f]{6}$")
 
 CLI_ERRORS: dict[int, tuple[str, str]] = {
     0: ("CLI_SUCCESS", "Erfolgreich."),
@@ -117,8 +120,8 @@ def _check_list_path(path: Path) -> str:
 
 
 def build_command(executable: Path, *, model: Path, machine: Path, process: Path, filaments: list[Path],
-                  outputdir: Path, export_name: str, slice_plates: bool, transform, debug_level: int = 2
-                  ) -> list[str]:
+                  outputdir: Path, export_name: str, slice_plates: bool, transform, debug_level: int = 2,
+                  filament_colours: list[str] | None = None) -> list[str]:
     """Build the argument vector. Paths may contain spaces; nothing is shell-quoted."""
     if "/" in export_name or "\\" in export_name:
         raise UnsafeArgumentError("export_name darf keinen Pfadtrenner enthalten.")
@@ -137,6 +140,12 @@ def build_command(executable: Path, *, model: Path, machine: Path, process: Path
     argv += ["--arrange", "1" if transform.arrange else "0"]
     argv += ["--load-settings", ";".join([_check_list_path(machine), _check_list_path(process)])]
     argv += ["--load-filaments", ";".join(_check_list_path(f) for f in filaments)]
+    if filament_colours and len(filament_colours) > 1:
+        # filament_colour is a regular config option (PrintConfig.cpp); BambuStudio.cpp recomputes the
+        # flush matrix from it when it is given on the command line. Not listed in --help.
+        if any(not _COLOUR.match(c) for c in filament_colours):
+            raise UnsafeArgumentError(f"Ungültige Filamentfarbe in {filament_colours}; erwartet #RRGGBB.")
+        argv += ["--filament-colour", ";".join(filament_colours)]
     if slice_plates:
         argv += ["--slice", "0"]
     argv += ["--export-3mf", export_name]

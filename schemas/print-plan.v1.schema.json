@@ -66,6 +66,20 @@
           "default": null,
           "description": "Expected filament_type, e.g. 'PLA'. Checked against the profile.",
           "title": "Material"
+        },
+        "colour": {
+          "anyOf": [
+            {
+              "pattern": "^#[0-9A-Fa-f]{6}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Filament colour as #RRGGBB. With several filaments Bambu Studio computes the flush volumes from these colours. Missing: taken from the 3MF project, else a fixed default palette (with a warning).",
+          "title": "Colour"
         }
       },
       "required": [

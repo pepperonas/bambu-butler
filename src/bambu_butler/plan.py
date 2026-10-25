@@ -50,6 +50,16 @@ class FilamentSelection(_Strict):
     profile: str = Field(description="Exact name of a filament profile compatible with the printer.")
     material: str | None = Field(
         default=None, description="Expected filament_type, e.g. 'PLA'. Checked against the profile.")
+    colour: str | None = Field(
+        default=None, pattern=r"^#[0-9A-Fa-f]{6}$",
+        description="Filament colour as #RRGGBB. With several filaments Bambu Studio computes the "
+                    "flush volumes from these colours. Missing: taken from the 3MF project, else a "
+                    "fixed default palette (with a warning).")
+
+    @field_validator("colour")
+    @classmethod
+    def _upper(cls, v: str | None) -> str | None:
+        return v.upper() if v else v
 
 
 class Seam(str, Enum):

@@ -85,8 +85,10 @@ Die Bambu-Studio-CLI hat die von Bambu Butler erzeugten, vollständig aufgelöst
 (`from: User`, `inherits: <Systemprofil>`) ohne Anpassung akzeptiert. Die Einstellungen aus dem Plan
 (4 Wände, 25 % Gyroid, Naht hinten, 4 Bodenschichten, Auto-Brim) wurden übernommen.
 
-Noch nicht auf echter Hardware geprüft: `prepare` (ungeslicter 3MF-Export), `open`, der macOS-GUI-Adapter,
-3MF-Mehrfarbprojekte sowie Windows und Linux. Details: [`docs/features.md`](docs/features.md).
+Ebenfalls am 2026-10-25 mit Bambu Studio geprüft: `prepare` (ungeslicter 3MF-Export), Slicen aus einem
+3MF, ein zweifarbiges 3MF auf dem A1 mini und `open`. Die Fensterprüfung von `open --check-gui` ist nur ein
+Hinweis (siehe [`docs/gui-macos.md`](docs/gui-macos.md)). Noch nicht geprüft: Windows, Linux und andere
+Drucker als der A1 mini. Details: [`docs/features.md`](docs/features.md).
 
 ## Schnellstart
 
@@ -356,9 +358,10 @@ Vollständige Übersicht: [`docs/features.md`](docs/features.md).
 ## Einschränkungen
 
 - **3MF-Mehrfarbprojekte:** Bambu Butler lädt die Filamente des Plans per `--load-filaments`, die Bambu-CLI
-  ersetzt damit die Filamentprofile des Projekts. Ob Farben, Slot-Zuordnungen und AMS-Informationen dabei
-  vollständig erhalten bleiben, ist **nicht verifiziert**. Bambu Butler erfindet keine Farb- oder
-  AMS-Zuordnungen, warnt bei abweichender Filamentanzahl und bricht ab, wenn Objekte Slots nutzen, die der
+  ersetzt damit die Filamentprofile des Projekts. Die Farbe je Filament kommt aus `filaments[].colour`,
+  sonst aus dem 3MF, sonst aus einer Standardpalette (mit Warnung); daraus berechnet Bambu Studio die
+  Spülmengen. Ein zweifarbiges 3MF auf dem A1 mini ist geprüft, andere Drucker und AMS-Zuordnungen nicht.
+  Bambu Butler warnt bei abweichender Filamentanzahl und bricht ab, wenn Objekte Slots nutzen, die der
   Plan nicht definiert.
 - **`compatible_printers_condition`**-Ausdrücke werden nicht ausgewertet; das ergibt eine Warnung statt einer Entscheidung.
 - **Mesh-Grenzen:** Belastungsrichtung, optimale Ausrichtung oder Supportbedarf lassen sich aus einem Mesh nicht

@@ -49,6 +49,7 @@ class Job:
     exit: dict | None = None
     slice_summary: dict | None = None
     notes: list[str] = field(default_factory=list)
+    filament_colours: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict:
         return {
@@ -65,6 +66,7 @@ class Job:
             "files": self.files,
             "profiles": self.profiles,
             "changes": self.changes,
+            "filament_colours": self.filament_colours,
             "command": self.argv,
             "run": self.run,
             "exit": self.exit,
@@ -109,6 +111,14 @@ def plan_job(validation: ValidationResult, settings: Settings, *, mode: str, now
                 f"{'filament' if key.startswith('filament') else key}.{c['key']}")}
             for c in diff_values(resolved.values, {k: v for k, v in exported.items()})
         ]
+    multi = len(filaments) > 1
+    if multi:
+        # Bambu Studio v02.08.02.61 sizes the project colour list from the loaded filaments and only
+        # then applies --filament-colour; without a colour in each profile a 3MF keeps one entry and
+        # fails with "filament_is_support's count 2 not equal to filament_colour's size 1".
+        for i, colour in enumerate(validation.filament_colours, start=1):
+            job.profiles[f"filament_{i}"]["data"]["filament_colour"] = [colour]
+    job.filament_colours = list(validation.filament_colours) if multi else []
     job.files = {
         "plan": "plan.json",
         "machine_profile": "profiles/machine.json",
@@ -138,6 +148,7 @@ def build_argv(job: Job, executable: Path) -> list[str]:
         export_name=job.files["project"],
         slice_plates=job.mode == "slice",
         transform=job.plan.transform,
+        filament_colours=job.filament_colours,
     )
 
 
@@ -264,6 +275,12 @@ def render_markdown(job: Job) -> str:
     lines += ["## Profile", "", "| Rolle | Basisprofil | Verwendet als |", "|---|---|---|"]
     for key, info in job.profiles.items():
         lines.append(f"| {key} | {info['base']} | {info['name']} ({info['from']}) |")
+    if job.filament_colours:
+        quellen = {"plan": "Plan", "3mf": "3MF-Projekt", "default": "Standardfarbe"}
+        lines += ["", "## Filamentfarben", "",
+                  "Bambu Studio berechnet daraus die Spülmengen beim Filamentwechsel.", ""]
+        lines += [f"- Filament {i}: {c} ({quellen.get(src, src)})" for i, (c, src) in
+                  enumerate(zip(job.filament_colours, v.filament_colour_sources, strict=True), start=1)]
     lines += ["", "## Änderungen gegenüber den Basisprofilen", ""]
     any_change = False
     for key, changes in job.changes.items():

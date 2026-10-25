@@ -10,6 +10,7 @@ produced a sliced project (``slicer.py``).
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -45,6 +46,8 @@ class ValidationResult:
     machine_overrides: dict[str, Any] = field(default_factory=dict)
     override_sources: dict[str, str] = field(default_factory=dict)
     model_report: dict | None = None
+    filament_colours: list[str] = field(default_factory=list)
+    filament_colour_sources: list[str] = field(default_factory=list)
 
     def add(self, level: str, code: str, message: str) -> None:
         self.issues.append(Issue(level, code, message))
@@ -85,6 +88,8 @@ class ValidationResult:
                 "process": self.process.name if self.process else None,
                 "filaments": [f.name for f in self.filaments],
             },
+            "filament_colours": [{"colour": c, "source": src} for c, src in
+                                 zip(self.filament_colours, self.filament_colour_sources, strict=True)],
             "overrides": {
                 "process": self.process_overrides,
                 "filament": self.filament_overrides,
@@ -215,6 +220,7 @@ def validate_plan(plan: PrintPlan, plan_path: Path, store: ProfileStore) -> Vali
 
     # ---- model
     _check_model(plan, result, printer)
+    _resolve_colours(plan, result)
     for question in result.blocking_questions:
         result.add("warning", "blocking_question", f"Offene Frage blockiert das Slicen: {question}")
     return result
@@ -257,6 +263,40 @@ def _check_model(plan: PrintPlan, result: ValidationResult, printer: ResolvedPro
         if project.get("has_gcode"):
             result.add("info", "already_sliced", "Das Eingabe-3MF enthält bereits G-Code; er wird neu erzeugt.")
     result.model_report = report
+
+
+# Used when neither the plan nor the 3MF project names a colour. The first entry is Bambu Studio's own
+# default for filament_colour (PrintConfig.cpp v02.08.02.61).
+DEFAULT_PALETTE = ["#00AE42", "#FF6A13", "#0086D6", "#F4EE2A", "#A03CF7", "#FFFFFF", "#000000", "#C12E1F"]
+_HEX = re.compile(r"^#[0-9A-Fa-f]{6}$")
+
+
+def _resolve_colours(plan: PrintPlan, result: ValidationResult) -> None:
+    """Colour per filament: plan > 3MF project > default palette.
+
+    With more than one filament the Bambu Studio CLI (v02.08.02.61) needs one colour per filament; its
+    default list has a single entry and the 4x4 flush matrix does not match, which crashes or fails.
+    """
+    project = (result.model_report or {}).get("project") or {}
+    project_colours = project.get("filament_colour") if isinstance(project.get("filament_colour"), list) else []
+    colours, sources, defaulted = [], [], []
+    for i, selection in enumerate(plan.filaments):
+        if selection.colour:
+            colours.append(selection.colour)
+            sources.append("plan")
+        elif i < len(project_colours) and _HEX.match(str(project_colours[i])[:7]):
+            colours.append(str(project_colours[i])[:7].upper())
+            sources.append("3mf")
+        else:
+            colours.append(DEFAULT_PALETTE[i % len(DEFAULT_PALETTE)])
+            sources.append("default")
+            defaulted.append(i + 1)
+    result.filament_colours, result.filament_colour_sources = colours, sources
+    if len(plan.filaments) > 1 and defaulted:
+        used = [colours[i - 1] for i in defaulted]
+        result.add("warning", "filament_colour_default",
+                   f"Keine Farbe für Filament {defaulted}; verwende Standardfarben {used}. "
+                   "Bambu Studio berechnet die Spülmengen aus den Farben – filaments[].colour setzen.")
 
 
 def require_ready(result: ValidationResult, *, allow_open_questions: bool = False) -> None:

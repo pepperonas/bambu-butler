@@ -5,6 +5,14 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+- Optional plan field `filaments[].colour` (`#RRGGBB`, schema v1 stays compatible). With several
+  filaments Bambu Butler passes `--filament-colour` and writes `filament_colour` into each exported
+  filament profile; colours come from the plan, else the 3MF project, else a fixed palette (warning
+  `filament_colour_default`). The job, `report.json` and `report.md` list the colours and their source.
+  Verified with Bambu Studio 02.08.02.61: a two-colour 3MF on the A1 mini slices (1 h 47 min,
+  10.95 g + 11.68 g); before, the CLI crashed (SIGSEGV) or exited with `CLI_CONFIG_FILE_ERROR`.
+
 ### Fixed
 - Detecting Bambu Studio (`doctor` and every command that probes `--help`) no longer leaves a
   `result.json` in the current directory: Bambu Studio writes one even for `--help`, so the probe now

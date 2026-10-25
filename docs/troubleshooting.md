@@ -62,10 +62,14 @@ nachstellen (geprüft am 2026-10-25).
   Filamente. **Abhilfe, mit der nackten CLI geprüft:** die Farben auf der Kommandozeile übergeben,
   `--filament-colour "#00AE42;#FF6A13"`. Dann rechnet die CLI die Spülmengen-Matrix wie die Oberfläche
   aus den Farben aus (`calc_flush_vol`, im Test 2 × 2 mit 318/234 mm³ statt der festen 4 × 4-Voreinstellung)
-  und slict sauber (Beispiel: 12,4 g + 10,43 g). Nur die Farben in die Filamentprofile zu schreiben
-  verhindert zwar den Absturz, lässt aber die 4 × 4-Matrix stehen; die Spülmengen stimmen dann nicht.
-  Bambu Butler übergibt die Farben noch nicht; bis dahin Mehrfarb-Projekte in der Oberfläche slicen
-  (`bambu-butler prepare`, dann `open`). Andere Drucker wurden nicht geprüft.
+  und slict sauber (Beispiel: 12,4 g + 10,43 g). Bei einem **3MF** reicht der Schalter allein nicht: die CLI
+  übernimmt die Farbliste des Projekts (oft ein Eintrag) und bricht dann mit `CLI_CONFIG_FILE_ERROR` ab
+  („filament_is_support's count 2 not equal to filament_colour's size 1“). Erst wenn zusätzlich jedes
+  geladene Filamentprofil `filament_colour` trägt, hat die Liste die richtige Länge. Nur die Profile zu
+  ändern verhindert den Absturz, lässt aber die feste 4 × 4-Matrix stehen; die Spülmengen stimmen dann nicht.
+  **Bambu Butler macht seit dieser Version beides** (Farbe aus `filaments[].colour`, sonst aus dem
+  3MF-Projekt, sonst eine Standardfarbe mit Warnung `filament_colour_default`). Geprüft mit einem
+  zweifarbigen 3MF auf dem A1 mini: 1 h 47 min, 10,95 g + 11,68 g. Andere Drucker wurden nicht geprüft.
 - **Slicen aus STL hängt bei „glfwInit Success.“** Nach dem Slicen erzeugt die CLI Vorschaubilder
   über OpenGL. Am 2026-10-25 hing dieser Schritt bei gesperrtem Bildschirm und gleichzeitig offener
   Bambu-Studio-Oberfläche ohne CPU-Last, auch bei einem Lauf, der vorher durchging. Welche der beiden

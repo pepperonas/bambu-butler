@@ -59,6 +59,9 @@ Always add `--json` (a global option, placed **before** the subcommand) when you
      flat tops; little support → keep orientation that avoids overhangs, `tree_auto`,
      `build_plate_only`, a sensible `threshold_angle_deg`.
    - Use `overrides.process|filament|machine` only for keys that exist in the base profile.
+   - Several filaments: set `filaments[].colour` (`#RRGGBB`) to the real spool colours when known;
+     Bambu Studio derives the flush volumes from them. Otherwise the 3MF colours or a default palette
+     are used and validation warns `filament_colour_default`.
    - Every non-default choice gets a `rationale` entry; every guess goes to `assumptions`.
    - Unknown but important facts go to `open_questions`. Mark `blocking: true` only when the
      result would be wrong without the answer.

@@ -131,6 +131,24 @@ def test_slice_with_fake_studio(resources, plan_file, tmp_path, fake_studio):
     assert "Erfolgreich von Bambu Studio geslict" in next(report).read_text()
 
 
+def test_slice_with_two_filaments_passes_colours(resources, plan_file, plan_dict, tmp_path, fake_studio):
+    from .conftest import make_3mf
+
+    make_3mf(plan_file.parent / "zwei.3mf")
+    plan_dict["model"]["path"] = "zwei.3mf"
+    plan_dict["filaments"] = [dict(plan_dict["filaments"][0], colour="#00ae42"), plan_dict["filaments"][0]]
+    plan_file.write_text(json.dumps(plan_dict))
+    r = invoke(*base_args(resources, tmp_path, fake_studio), "slice", plan_file)
+    assert r.exit_code == 0, r.stdout
+    job = as_json(r)["job"]
+    assert job["filament_colours"] == ["#00AE42", "#000000"]
+    argv = json.loads((tmp_path / "fake-argv.json").read_text())
+    assert argv[argv.index("--filament-colour") + 1] == "#00AE42;#000000"
+    (d,) = list((tmp_path / "jobs out").iterdir())
+    assert json.loads((d / "profiles/filament_2.json").read_text())["filament_colour"] == ["#000000"]
+    assert "Filament 2: #000000 (3MF-Projekt)" in (d / "report.md").read_text()
+
+
 def test_slice_failure_is_reported(resources, plan_file, tmp_path, fake_studio, monkeypatch):
     monkeypatch.setenv("FAKE_STUDIO_MODE", "fail")
     r = invoke(*base_args(resources, tmp_path, fake_studio), "slice", plan_file)

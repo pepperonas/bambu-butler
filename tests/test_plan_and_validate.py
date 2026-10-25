@@ -149,3 +149,31 @@ def test_blocking_question_reported(plan_dict, workdir, resources):
     plan_dict["open_questions"] = [{"question": "Welche Belastungsrichtung?", "blocking": True}]
     r = run(plan_dict, workdir, resources)
     assert r.compatible and r.blocking_questions == ["Welche Belastungsrichtung?"]
+
+
+def test_filament_colour_sources(plan_dict, workdir, resources):
+    make_3mf(workdir / "multi.3mf")
+    plan_dict["model"]["path"] = "multi.3mf"
+    plan_dict["filaments"] = [dict(plan_dict["filaments"][0], colour="#ff6a13"), plan_dict["filaments"][0]]
+    r = run(plan_dict, workdir, resources)
+    assert r.filament_colours == ["#FF6A13", "#000000"]
+    assert r.filament_colour_sources == ["plan", "3mf"]
+    assert not any(i.code == "filament_colour_default" for i in r.issues)
+
+
+def test_filament_colour_default_warns_only_for_several(plan_dict, workdir, resources):
+    r = run(plan_dict, workdir, resources)
+    assert r.filament_colours == ["#00AE42"]
+    assert not any(i.code == "filament_colour_default" for i in r.issues)
+    plan_dict["filaments"] *= 2
+    r = run(plan_dict, workdir, resources)
+    assert r.filament_colours == ["#00AE42", "#FF6A13"]
+    assert r.filament_colour_sources == ["default", "default"]
+    assert any(i.code == "filament_colour_default" for i in r.warnings)
+
+
+@pytest.mark.parametrize("bad", ["red", "#12345", "#1234567", "#GGGGGG"])
+def test_filament_colour_format(plan_dict, bad):
+    plan_dict["filaments"][0]["colour"] = bad
+    with pytest.raises(PlanError):
+        parse_plan(plan_dict)
