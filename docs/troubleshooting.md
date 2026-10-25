@@ -72,9 +72,11 @@ nachstellen (geprüft am 2026-10-25).
   zweifarbigen 3MF auf dem A1 mini: 1 h 47 min, 10,95 g + 11,68 g. Andere Drucker wurden nicht geprüft.
 - **Slicen aus STL hängt bei „glfwInit Success.“** Nach dem Slicen erzeugt die CLI Vorschaubilder
   über OpenGL. Am 2026-10-25 hing dieser Schritt bei gesperrtem Bildschirm und gleichzeitig offener
-  Bambu-Studio-Oberfläche ohne CPU-Last, auch bei einem Lauf, der vorher durchging. Welche der beiden
-  Bedingungen es auslöst, ist nicht geklärt. 3MF-Eingaben, die schon Vorschaubilder enthalten,
-  waren nicht betroffen. Das Zeitlimit (`--timeout`) beendet den Lauf sauber mit `slicer_timeout`.
+  Bambu-Studio-Oberfläche ohne CPU-Last, auch bei einem Lauf, der vorher durchging. Gegenprobe am selben
+  Tag mit entsperrtem Bildschirm und weiter offener Oberfläche: derselbe Plan slict in 2 s. Auslöser ist
+  also der **gesperrte Bildschirm**, nicht die offene Oberfläche. Abhilfe: bei entsperrtem Bildschirm
+  slicen. 3MF-Eingaben, die schon Vorschaubilder enthalten, waren nicht betroffen. Das Zeitlimit
+  (`--timeout`) beendet den Lauf sauber mit `slicer_timeout`.
 - **Binär-STL mit Nullvektor als Normale und kleiner Grundfläche → `CLI_DATA_FILE_ERROR`.** Ein
   Würfel mit X und Y ≤ 15 mm wurde abgelehnt, derselbe Würfel mit berechneten Normalen oder als ASCII-STL
   nicht; 15 × 20 mm ging auch mit Null-Normalen. `inspect` meldet solche Dateien als in Ordnung. Abhilfe:
